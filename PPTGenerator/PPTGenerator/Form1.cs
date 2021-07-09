@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -89,7 +90,19 @@ namespace PPTGenerator
 
             try
             {
-                WebRequest gRequest = WebRequest.Create(URL + richTextBox1.Text);
+                //\f0\fs17
+                MatchCollection searchText = Regex.Matches(richTextBox1.Rtf, @"\\b(\s|\\f0\\fs17\s)[a-zA-Z]\w*\s?\\b0");
+                string resultText = "";
+
+                foreach (Match s in searchText)
+                {
+                    resultText += " " + s.ToString();
+                }
+                resultText = resultText.Replace(@"\b ", "");
+                resultText = resultText.Replace(@"\b0", "");
+                resultText = resultText.Replace(@"\b\f0\fs17", "");
+
+                WebRequest gRequest = WebRequest.Create(URL + resultText);
                 WebResponse gResponse = gRequest.GetResponse();
 
                 string googleResponseFromServer;
@@ -181,7 +194,7 @@ namespace PPTGenerator
 
             try
             {
-                presentation.Save("Slide.pptx");
+                presentation.Save("SlideActual.pptx");
 
             }
 
@@ -230,10 +243,16 @@ namespace PPTGenerator
             int x = listView1.FocusedItem.Index;
             imageList2.ImageSize = new Size(256, 160);
             imageList2.ColorDepth = ColorDepth.Depth32Bit;
-            imageList2.Images.Add(imageList1.Images[x]);
 
-            
-            listView2.Items.Add("", listView2.Items.Count);
+            if (listView2.Items.Count < 3)
+            {
+                imageList2.Images.Add(imageList1.Images[x]);
+                listView2.Items.Add("", listView2.Items.Count);
+            }
+            else
+            {
+                MessageBox.Show("You can only add 3 pictures to the slide.");
+            }
 
             
 
@@ -258,7 +277,7 @@ namespace PPTGenerator
                 richTextBox1.SelectionFont = new System.Drawing.Font(richTextBox1.Font, FontStyle.Regular);
             }
 
-            //not working
+            
 
 
 
@@ -277,6 +296,17 @@ namespace PPTGenerator
         {
             int x = listView2.FocusedItem.Index;
             listView2.Items.RemoveAt(x);
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            //makeBold
+            //NOT WORKING
+
+            int pFrom = richTextBox1.Rtf.IndexOf(@"\b") + @"\b".Length;
+            int pTo = richTextBox1.Rtf.IndexOf(@"\b0");
+
+            MessageBox.Show(richTextBox1.Rtf.Substring(pFrom, pTo - pFrom));
         }
     }
 }
